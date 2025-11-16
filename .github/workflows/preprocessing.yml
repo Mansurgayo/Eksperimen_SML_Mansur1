@@ -1,16 +1,13 @@
 # Nama Workflow
 name: 1. Data Preprocessing CI
 
-
 on:
   push:
     branches:
       - main
     paths:
-      
       - 'preprocessing/**'
-      
-      - 'namadataset_raw/diabetes.csv' 
+      - 'namadataset_raw/diabetes.csv'
   workflow_dispatch:
 
 jobs:
@@ -18,36 +15,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout kode repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Setup environment Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      # 3. Install dependencies dari requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 4. Buat folder output (PENTING)
-      # Skrip Python butuh folder ini ada SEBELUM menyimpan file
-      - name: Create output directory
-        run: mkdir -p namadataset_preprocessing
-
-      # 5. Jalankan skrip otomatisasi preprocessing
-      # Perhatikan: Nama file sudah benar dan tidak ada argumen
       - name: Run preprocessing script
         run: python preprocessing/automate_Mansur.py
 
-      # 6. Upload hasil preprocessing sebagai artifact
-      # Path ini sekarang harus cocok dengan yang ada di skrip .py
       - name: Upload processed data artifact
         uses: actions/upload-artifact@v4
         with:
           name: processed-data
-          path: namadataset_preprocessing/cleaned_dataset.csv
+          path: preprocessing/namadataset_preprocessing/cleaned_dataset.csv
