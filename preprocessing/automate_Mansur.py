@@ -1,80 +1,77 @@
 import pandas as pd
-import numpy as np
-import argparse
+from sklearn.preprocessing import StandardScaler
 import os
 
-def preprocess_data(input_path, output_path):
-    """
-    Memuat data mentah dari input_path, melakukan preprocessing
-    (sesuai notebook Anda), dan menyimpannya ke output_path.
-    """
-    print(f"Memulai preprocessing untuk {input_path}...")
+# --- PATH INI ADALAH KUNCI ---
+# Path ini relatif dari root, tempat GitHub Actions berjalan
+RAW_DATA_PATH = 'namadataset_raw/diabetes.csv'
+
+# Folder BARU tempat kita akan menyimpan output
+PROCESSED_DATA_FOLDER = 'namadataset_preprocessing' 
+
+# Path lengkap ke file output (HARUS SAMA DENGAN .yml)
+PROCESSED_DATA_PATH = os.path.join(PROCESSED_DATA_FOLDER, 'cleaned_dataset.csv')
+# -----------------------------
+
+def load_data(raw_path):
+    """Memuat data dari path file mentah."""
+    print(f"Memuat data dari: {raw_path}")
+    df = pd.read_csv(raw_path)
+    print("Data berhasil dimuat.")
+    return df
+
+def preprocess_data(df):
+    """Membersihkan dan memproses data."""
+    print("Memulai preprocessing...")
+    df_processed = df.copy()
     
-    try:
-        df = pd.read_csv(input_path)
-        print("Data mentah berhasil dimuat.")
-    except FileNotFoundError:
-        print(f"Error: File tidak ditemukan di {input_path}")
+    # Kolom yang memiliki nilai 0 tidak logis
+    cols_with_zero_issue = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
+    
+    # Ganti 0 dengan NaN (Missing Value)
+    for col in cols_with_zero_issue:
+        df_processed[col] = df_processed[col].replace(0, pd.NA)
+        
+    # Isi NaN dengan median
+    for col in cols_with_zero_issue:
+        if df_processed[col].isnull().any():
+            median_val = df_processed[col].median()
+            df_processed[col] = df_processed[col].fillna(median_val)
+            print(f"Mengisi NaN di '{col}' dengan median: {median_val}")
+    
+    if 'Outcome' not in df_processed.columns:
+        print("Error: Kolom 'Outcome' tidak ditemukan.")
+        return None
+        
+    X = df_processed.drop('Outcome', axis=1)
+    y = df_processed['Outcome']
+    
+    print("Melakukan feature scaling (StandardScaler)...")
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    
+    df_cleaned = pd.DataFrame(X_scaled, columns=X.columns)
+    df_cleaned['Outcome'] = y.values
+    print("Preprocessing selesai.")
+    return df_cleaned
+
+def save_data(df, processed_path):
+    """Menyimpan data yang sudah bersih ke path tujuan."""
+    if df is None:
+        print("Tidak ada data untuk disimpan.")
         return
 
+    # Membuat folder JIKA BELUM ADA (Penting)
+    # os.path.dirname(processed_path) akan mengambil 'namadataset_preprocessing'
+    os.makedirs(os.path.dirname(processed_path), exist_ok=True)
     
-    
-    
-    cols_with_zero = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
-    for col in cols_with_zero:
-        df[col] = df[col].replace(0, np.nan)
-    print("Nilai 0 diganti dengan NaN.")
+    # Menyimpan data bersih
+    df.to_csv(processed_path, index=False)
+    print(f"Data bersih BERHASIL DISIMPAN di: {processed_path}")
 
-    
-    df.fillna(df.median(), inplace=True)
-    print("Nilai NaN diisi dengan median.")
-
-    
-    df.drop_duplicates(inplace=True)
-    print("Data duplikat dihapus.")
-    
-    
-    numeric_cols = df.select_dtypes(include=np.number).columns.drop('Outcome')
-    Q1 = df[numeric_cols].quantile(0.25)
-    Q3 = df[numeric_cols].quantile(0.75)
-    IQR = Q3 - Q1
-    lower_bound = Q1 - 1.5 * IQR
-    upper_bound = Q3 + 1.5 * IQR
-    
-    condition = ((df[numeric_cols] < lower_bound) | (df[numeric_cols] > upper_bound)).any(axis=1)
-    df_cleaned = df[~condition]
-    print(f"Data setelah outlier removal: {df_cleaned.shape}")
-    
-    
-    
-    
-    output_dir = os.path.dirname(output_path)
-    
-    
-    if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    # 6. Simpan Data yang Sudah Diproses
-    df_cleaned.to_csv(output_path, index=False)
-    print(f"Preprocessing selesai. Data bersih disimpan di {output_path}")
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Script otomatisasi preprocessing data diabetes.")
-    
-
-    parser.add_argument(
-        '--input', 
-        type=str, 
-        default='../namadataset_raw/diabetes.csv', 
-    )
-    
-    parser.add_argument(
-        '--output', 
-        type=str, 
-        default='cleaned_dataset.csv', 
-        help='Path untuk menyimpan file hasil preprocessing'
-    )
-    
-    args = parser.parse_args()
-    
-    preprocess_data(input_path=args.input, output_path=args.output)
+if __name__ == '__main__':
+    print("Menjalankan pipeline preprocessing otomatis...")
+    df = load_data(RAW_DATA_PATH)
+    df_cleaned = preprocess_data(df)
+    save_data(df_cleaned, PROCESSED_DATA_PATH)
+    print("Pipeline selesai.")
