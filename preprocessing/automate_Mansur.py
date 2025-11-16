@@ -2,14 +2,12 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import os
 
-# --- PATH INI ADALAH KUNCI ---
-# Path ini relatif dari root, tempat GitHub Actions berjalan
 RAW_DATA_PATH = 'namadataset_raw/diabetes.csv'
 
-# Folder BARU tempat kita akan menyimpan output
+
 PROCESSED_DATA_FOLDER = 'namadataset_preprocessing' 
 
-# Path lengkap ke file output (HARUS SAMA DENGAN .yml)
+
 PROCESSED_DATA_PATH = os.path.join(PROCESSED_DATA_FOLDER, 'cleaned_dataset.csv')
 # -----------------------------
 
@@ -25,14 +23,13 @@ def preprocess_data(df):
     print("Memulai preprocessing...")
     df_processed = df.copy()
     
-    # Kolom yang memiliki nilai 0 tidak logis
     cols_with_zero_issue = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
     
-    # Ganti 0 dengan NaN (Missing Value)
+  
     for col in cols_with_zero_issue:
         df_processed[col] = df_processed[col].replace(0, pd.NA)
         
-    # Isi NaN dengan median
+  
     for col in cols_with_zero_issue:
         if df_processed[col].isnull().any():
             median_val = df_processed[col].median()
@@ -61,11 +58,10 @@ def save_data(df, processed_path):
         print("Tidak ada data untuk disimpan.")
         return
 
-    # Membuat folder JIKA BELUM ADA (Penting)
-    # os.path.dirname(processed_path) akan mengambil 'namadataset_preprocessing'
+
     os.makedirs(os.path.dirname(processed_path), exist_ok=True)
     
-    # Menyimpan data bersih
+    
     df.to_csv(processed_path, index=False)
     print(f"Data bersih BERHASIL DISIMPAN di: {processed_path}")
 
