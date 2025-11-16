@@ -1,15 +1,16 @@
 # Nama Workflow
 name: 1. Data Preprocessing CI
 
-# Trigger: Kapan workflow ini akan berjalan
+
 on:
   push:
     branches:
       - main
     paths:
+      
       - 'preprocessing/**'
-      - 'diabetes_raw.csv' # Diperbarui ke dataset Anda
-
+      
+      - 'namadataset_raw/diabetes.csv' 
   workflow_dispatch:
 
 jobs:
@@ -27,21 +28,26 @@ jobs:
         with:
           python-version: '3.10'
 
-      # 3. Install dependencies
+      # 3. Install dependencies dari requirements.txt
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install pandas scikit-learn numpy # Memastikan library utama ter-install
+          pip install -r requirements.txt
 
-      # 4. Jalankan skrip otomatisasi preprocessing
+      # 4. Buat folder output (PENTING)
+      # Skrip Python butuh folder ini ada SEBELUM menyimpan file
+      - name: Create output directory
+        run: mkdir -p namadataset_preprocessing
+
+      # 5. Jalankan skrip otomatisasi preprocessing
+      # Perhatikan: Nama file sudah benar dan tidak ada argumen
       - name: Run preprocessing script
-        run: |
-          python preprocessing/automate_Nama-Siswa.py --input diabetes_raw.csv --output preprocessing
+        run: python preprocessing/automate_Mansur.py
 
-      # 5. Upload hasil preprocessing sebagai artifact
+      # 6. Upload hasil preprocessing sebagai artifact
+      # Path ini sekarang harus cocok dengan yang ada di skrip .py
       - name: Upload processed data artifact
         uses: actions/upload-artifact@v4
         with:
           name: processed-data
-          path: preprocessing/diabetes_preprocessing.csv 
+          path: namadataset_preprocessing/cleaned_dataset.csv
