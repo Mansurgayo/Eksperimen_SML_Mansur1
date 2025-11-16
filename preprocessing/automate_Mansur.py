@@ -1,3 +1,4 @@
+# UPDATE FINAL: SCALER SUDAH DIKIRIM
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import os
